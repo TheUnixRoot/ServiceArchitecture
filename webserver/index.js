@@ -1,3 +1,4 @@
+
 const express = require('express')
 var redis = require('redis');
 
@@ -19,41 +20,61 @@ client.on('error', function (err) {
 });
 
 var command = ""
-
-var xData = -1
-var yData = -1
-
+var interval = 5000
+var xData = []
+var yData = []
 client.set('command', command, redis.print);
-client.get('xAxis', function (error, result) {
-    if (error) {
-        console.log(error);
-        throw error;
-    }
-    xData = result
-});
-client.get('yAxis', function (error, result) {
-    if (error) {
-        console.log(error);
-        throw error;
-    }
-    yData = result
-});
 
 var app = express()
+app.use(express.json())
+
+app.all('/*', (req, res, next) =>  {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With');
+    res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE');
+    return next();
+})
 
 app.get('/', (request, response) => {
     response.send('// TODO Angular stuff')
 })
 
 app.get('/data', (request, response) => {
+    client.set('command', command, redis.print);
     var data = {xData, yData}
       response.send(data)
 })
 
-app.get('/command', (request, response) => {
-    client.set('command', 'stop', redis.print);
-    response.send('stop')
+
+setInterval(() => {
+    client.get('xAxis', function (error, result) {
+        if (error) {
+            console.log(error);
+            throw error;
+        }
+        xData.push(result)
+    });
+    client.get('yAxis', function (error, result) {
+        if (error) {
+            console.log(error);
+            throw error;
+        }
+        yData.push(result)
+    });
+}, interval)
+
+
+app.post('/command', (request, response) => {
+    client.set(request.body.axis, request.body.command, redis.print);
+    response.send(request.body)
 })
+
+app.post('/interval', (request, response) => {
+    interval = request.body.interval
+    client.set('interval', request.body.interval, redis.print);
+    response.send(request.body)
+})
+
 
 app.listen(port, (error) => {
   if (error) {
@@ -61,3 +82,5 @@ app.listen(port, (error) => {
   }
   console.log(`NodeJS Server is listening on ${port}`)
 })
+
+

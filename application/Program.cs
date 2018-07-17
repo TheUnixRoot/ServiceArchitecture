@@ -3,6 +3,8 @@ using System.Threading;
 using ServiceStack.Redis;
 using System.Collections.Generic;
 
+// Requires https://www.nuget.org/packages/ServiceStack.Redis/ nuget package
+
 namespace application
 {
     class Program
@@ -25,18 +27,28 @@ namespace application
             
             var randomGenerator =  new Random();
             var command = "Hola";
-            redisClient.Set<string>("interval", "10");
+            redisClient.Set<int>("interval", 5000);
 
-            while (command != "stop") {
-                var xAxis = randomGenerator.Next(0,1000).ToString();
-                var yAxis = randomGenerator.Next(0,1000).ToString();
-                Console.WriteLine(redisClient.Host);
-                redisClient.Set<string>("xAxis", xAxis);
-                redisClient.Set<string>("yAxis", yAxis);
-                var interval = redisClient.Get<string>("interval");
-                Thread.Sleep(Int32.Parse(interval));
-                command = redisClient.Get<string>("command");
-                Console.WriteLine(command!="stop"?"Running...":"Stop have been read");
+            while (true) {
+                // Console.WriteLine(redisClient.Host);
+                if (redisClient.Get<string>("yAxisCommand") == "start") {
+                    var yAxis = randomGenerator.Next(0,1000);
+                    redisClient.Set<int>("yAxis", yAxis);
+                    Console.WriteLine("Y running");
+                } else {
+                    Console.WriteLine("Y stopped");
+                }
+                if (redisClient.Get<string>("xAxisCommand") == "start") {
+                    var xAxis = randomGenerator.Next(0,1000);
+                    redisClient.Set<int>("xAxis", xAxis);
+                    Console.WriteLine("X running");
+                } else {
+                    Console.WriteLine("X stopped");
+                }
+                var interval = redisClient.Get<int>("interval");
+                Console.WriteLine(command!="stop"?$"Waiting {interval/1000} seconds...":"Stop have been read");
+                Thread.Sleep(interval);
+                
             }
 
         }
