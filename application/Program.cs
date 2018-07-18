@@ -26,7 +26,6 @@ namespace application
             redisClient = new RedisClient(uri, port);
             
             var randomGenerator =  new Random();
-            var command = "Hola";
             redisClient.Set<int>("interval", 5000);
 
             while (true) {
@@ -46,7 +45,7 @@ namespace application
                     Console.WriteLine("X stopped");
                 }
                 var interval = redisClient.Get<int>("interval");
-                Console.WriteLine(command!="stop"?$"Waiting {interval/1000} seconds...":"Stop have been read");
+                Console.WriteLine($"Waiting {interval/1000} seconds...");
                 Thread.Sleep(interval);
                 
             }
